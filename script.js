@@ -232,10 +232,37 @@ function generate() {
 }
 
 // ── Download ────────────────────────────────────────────
-document.getElementById("dlBtn").addEventListener("click", () => {
+document.getElementById("dlBtn").addEventListener("click", async () => {
   const canvas = document.getElementById("c");
-  const link = document.createElement("a");
-  link.download = "star-scatter.png";
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+
+  // try native share sheet first (mobile)
+  if (navigator.share && navigator.canShare) {
+    canvas.toBlob(
+      async (blob) => {
+        const file = new File([blob], "star-scatter.jpg", {
+          type: "image/jpeg",
+        });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "star scatter ✦",
+          });
+          return;
+        }
+        fallbackDownload(canvas);
+      },
+      "image/jpeg",
+      0.95,
+    );
+  } else {
+    // desktop fallback
+    fallbackDownload(canvas);
+  }
 });
+
+function fallbackDownload(canvas) {
+  const link = document.createElement("a");
+  link.download = "star-scatter.jpg";
+  link.href = canvas.toDataURL("image/jpeg", 0.95);
+  link.click();
+}
